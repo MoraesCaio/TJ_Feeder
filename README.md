@@ -1,10 +1,18 @@
 # TJ Feeder
 
-This package generates a daily input for [TaskJuggler](https://taskjuggler.org/) from a csv file (comma as separator) with headers: time_spent (XYmin or X.Yh), issue_name (name of task) and issue_description (optional description of task).
+This package generates a daily input for [TaskJuggler](https://taskjuggler.org/) from a CSV file (comma as separator) with headers: time_spent (XYmin or X.Yh), issue_name (name of task), and issue_description (optional description of task).
+
+# Installation
+
+The project is available on PyPI's page [TJ_Feeder](https://pypi.org/project/tj-feeder/). To install it, run:
+
+```shell
+pip install tj_feeder
+```
 
 # Set up
 
-First, you need to setup the starting hour of your shift, the shift duration in hours and the display mode for task durations (minutes or hours).
+First, you need to set up the starting hour of your shift, the shift duration in hours, and the display mode for task durations (minutes or hours).
 
 To set the starting hour, run the command:
 ```shell
@@ -23,7 +31,7 @@ tj_feed define_default --use-minutes [True|False]
 
 # Generating Daily Feed
 
-Create your csv file following the format:
+Create your CSV file following the format:
 
 ```
 time_spent,issue_name,issue_description
@@ -31,8 +39,8 @@ time_spent,issue_name,issue_description
 ```
 
 - The time spent can be in two formats: XYmin or X.Yh (e.g. 45min or 0.75h);
-- Make sure the issue names matches with the tasks defined by your team manager;
-- The issue decription is optional;
+- Make sure the issue names match with the tasks defined by your team manager;
+- The issue description is optional;
 - Use commas only to separate the values.
 
 E.g.:
