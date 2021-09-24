@@ -83,6 +83,7 @@ def define_default(
     with open(CFG_FILE, 'w') as cfg_json:
         json.dump(cfg_dict, cfg_json, indent=4)
 
+
 def feed(
     csv_file: str,
     day: int = 1,
@@ -117,14 +118,15 @@ def feed(
     minutes_per_day, hours_per_day = list(map(list, zip(*minute_hour_times)))
 
     # calculating
-    # total_worktime = sum(minutes_per_day)
-    # expected_worktime = shift_hours * 60
-    # overtime = max(0, total_worktime - expected_worktime)
-    # due_time = min(expected_worktime - total_worktime, expected_worktime)
+    total_worktime = sum(minutes_per_day)
+    expected_worktime = shift_hours * 60
+    over_time = timedelta(minutes=max(0, total_worktime - expected_worktime))
+    due_time = timedelta(minutes=min(expected_worktime - total_worktime, expected_worktime))
+    expected_time = timedelta(minutes=expected_worktime)
 
     # building daily feed
     daily_feed_str = ''
-    cummulative_time = timedelta()
+    cummulative_time = timedelta(minutes=0)
     shift_time = timedelta(hours=shift_hours)
     cur_time = datetime(year, month, day, starting_hour)
     for i in range(len(df)):
@@ -134,7 +136,7 @@ def feed(
         spent_time = f'+{minutes_per_day[i]}min' if use_minutes else f'+{hours_per_day[i]}h'
         cummulative_time += timedelta(minutes=minutes_per_day[i])
         if cummulative_time > shift_time:
-            spent_time = f'{spent_time:7} {{overtime 1}}'
+            spent_time = f'{spent_time:7} {{over_time 1}}'
 
         # feed line
         daily_feed_str += f"booking {df['issue_name'].iloc[i]:30} " + \
@@ -142,6 +144,19 @@ def feed(
                           f"# {df['issue_description'].iloc[i]}\n"
 
         cur_time += timedelta(minutes=minutes_per_day[i])
+
+    logger.info('Checking missing time and over time...')
+    logger.info(f'work_time {cummulative_time.seconds // 60:3} minutes')
+    logger.info(f'over_time {over_time.seconds // 60:3} minutes')
+    logger.info(f'due_time  {due_time.seconds // 60:3} minutes')
+    if due_time.seconds > 60:
+        missing_minutes = due_time.seconds // 60
+        missing_hours = missing_minutes / 60
+        logger.warning(f"You are missing {missing_hours} hours ({missing_minutes} minutes)")
+    elif over_time.seconds > 60:
+        extra_minutes = over_time.seconds // 60
+        extra_hours = extra_minutes / 60
+        logger.warning(f"You worked {extra_hours} hours ({extra_minutes} minutes)")
 
     return daily_feed_str
 
