@@ -53,11 +53,14 @@ def parse_time_string(time: str) -> Tuple[int, float]:
     return minutes, hours
 
 
-# @logger.catch
 class Dates:
+    cfg = configs.load()
 
-    def __init__(self, holidays_file: str = ''):
-        self.holidays_file = holidays_file
+    def __init__(self):
+        try:
+            self.holidays_file = self.cfg['holidays_file']
+        except KeyError as e:
+            raise KeyError('Please set the path to holidays_file with "tj_feed define --holidays-file <path_to_holiday_file>"') from e
         self.holidays = Dates.parse_holidays_file(self.holidays_file)
 
     @staticmethod
@@ -94,18 +97,17 @@ class Dates:
         return date.weekday() in [SATURDAY, SUNDAY]
 
     @staticmethod
-    def is_next_month(date: datetime, month: int, month_start_workday: int = 24) -> bool:
+    def is_next_month(date: datetime, month: int) -> bool:
         """Checks if the date is the initial date of the next month.
 
         Args:
             date (datetime): Date to check
             month (int): Current month
-            month_start_workday (int, optional): Starting day of the month. Defaults to 24.
 
         Returns:
             bool: True if is the date is the first date of the next month. False, otherwise.
         """
-        return date.day == month_start_workday and date.month != month
+        return date.day == Dates.cfg['month_start_workday'] and date.month != month
 
     def get_list_of_days(self, stop_function: Callable, year: int, month: int, start_workday: int) -> List[Optional[datetime]]:
         """Gets a list of workdays considering the holidays using a function
@@ -115,7 +117,7 @@ class Dates:
             stop_function (Callable): Function that returns True for the first date not to be included.
             year (int): Current year
             month (int): Current month
-            week_start_workday (int): First workday of the week. Usually, the date for monday.
+            week_start_workday (int): First workday of the period ranging from 1 to 31.
 
         Returns:
             List[Optional[datetime]]: [description]
@@ -160,22 +162,21 @@ class Dates:
             start_workday=week_start_workday
         )
 
-    def get_month_workdays(self, year: int, month: int, month_start_workday: int = 24) -> List[Optional[datetime]]:
+    def get_month_workdays(self, year: int, month: int) -> List[Optional[datetime]]:
         """Gets a list of workdays for the month considering the holidays.
 
         Args:
             year (int): Current year
             month (int): Current month
-            month_start_workday (int): First workday of the month.
 
         Returns:
             List[Optional[datetime]]: month's workday dates
         """
         return self.get_list_of_days(
-            stop_function=lambda dt: Dates.is_next_month(dt, month, month_start_workday),
+            stop_function=lambda dt: Dates.is_next_month(dt, month),
             year=year,
             month=month,
-            start_workday=month_start_workday
+            start_workday=Dates.cfg['month_start_workday']
         )
 
 
