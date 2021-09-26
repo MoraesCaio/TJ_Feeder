@@ -56,8 +56,11 @@ def parse_time_string(time: str) -> Tuple[int, float]:
 class Dates:
     cfg = configs.load()
 
-    def __init__(self, holidays_file: str = ''):
-        self.holidays_file = holidays_file
+    def __init__(self):
+        try:
+            self.holidays_file = self.cfg['holidays_file']
+        except KeyError as e:
+            raise KeyError('Please set the path to holidays_file with "tj_feed define --holidays-file <path_to_holiday_file>"') from e
         self.holidays = Dates.parse_holidays_file(self.holidays_file)
 
     @staticmethod
