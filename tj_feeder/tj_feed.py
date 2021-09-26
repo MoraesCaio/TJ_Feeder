@@ -1,3 +1,4 @@
+from tj_feeder.batch import Batch
 from typing import Optional
 from pathlib import Path
 import re
@@ -65,6 +66,64 @@ def feed(csv_file: str) -> str:
     work_day.issue_warnings()
 
     return daily_feed_str
+
+
+def create_month_dir(
+    root_directory: str,
+    year: int,
+    month: int
+) -> None:
+    """Creates all necessary CSV files considering holidays and weekends.
+
+    E.g.:
+        root_directory/
+        |__ 2022-01/
+            |__ 2022-01-03.csv
+            |__ 2022-01-04.csv
+            ...
+            |__ 2022-01-31.csv
+
+    Args:
+        root_directory (str): Directory to be created
+        year (int): Current year
+        month (int): Current month
+    """
+    Batch().create_month_csv_dir(root_directory, year, month)
+
+
+def feed_month_dir(month_directory: str) -> str:
+    """Generate feed for month directory using one extra line break to
+        separate bookings per day and three extra line breaks to
+        separate bookings per week.
+
+    E.g.
+        2022-01/
+            |__ 2022-01-03.csv
+            |__ 2022-01-04.csv
+            ...
+            |__ 2022-01-31.csv
+
+    Output:
+        {bookings for 2022-01-03}
+        {bookings for 2022-01-04}
+        {bookings for 2022-01-05}
+        {bookings for 2022-01-06}
+        {bookings for 2022-01-07}
+
+
+
+        {bookings for 2022-01-10}
+        {bookings for 2022-01-11}
+        {bookings for 2022-01-12}
+        ...
+
+    Args:
+        month_directory (str): Month directory to parse
+
+    Returns:
+        str: Formatted output for TaskJuggler
+    """
+    return Batch().feed_month_csv_dir(month_directory)
 
 
 @logger.catch(reraise=True)
