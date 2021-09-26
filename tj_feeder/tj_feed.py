@@ -50,24 +50,17 @@ def define(
     configs.save(cfg_dict)
 
 
-def feed(
-    csv_file: str,
-    day: int = 1,
-    month: int = 1,
-    year: int = 2021,
-) -> str:
+def feed(csv_file: str) -> str:
     """Generates a Daily feed for TaskJuggler from a csv file.
+        File name must follow the format "yyyy-mm-dd.csv" (e.g. 2021-09-24.csv)
 
     Args:
         csv_file (str): Path to csv file.
-        day (int, optional): Day of entry. Defaults to 1.
-        month (int, optional): Month of entry. Defaults to 1.
-        year (int, optional): Year of entry. Defaults to 2021.
-
     Returns:
         str: Daily feed string
     """
     work_day = th.WorkDay(csv_file=csv_file)
+    year, month, day = re.split(r'\D', Path(csv_file).stem)
     daily_feed_str = work_day.daily_feed(year=year, month=month, day=day)
     work_day.issue_warnings()
 
