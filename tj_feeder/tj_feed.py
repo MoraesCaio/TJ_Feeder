@@ -9,7 +9,8 @@ from tj_feeder import configs, time_helper as th
 def define(
     starting_hour: Optional[int] = None,
     shift_hours: Optional[int] = None,
-    use_minutes: Optional[bool] = None
+    month_start_workday: Optional[int] = None,
+    use_minutes: Optional[bool] = None,
 ) -> None:
     """Sets default configuration.
 
@@ -20,6 +21,7 @@ def define(
     """
 
     cfg_dict = configs.load()
+
     if starting_hour is not None:
         print(f'Defining starting hour as {starting_hour}')
         cfg_dict['starting_hour'] = starting_hour
@@ -27,6 +29,10 @@ def define(
     if shift_hours is not None:
         print(f'Defining shift duration as {shift_hours} hours')
         cfg_dict['shift_hours'] = shift_hours
+
+    if month_start_workday is not None:
+        print(f'Defining starting hour as {month_start_workday}')
+        cfg_dict['month_start_workday'] = month_start_workday
 
     if use_minutes is not None:
         print(f'Defining duration unit as {"minutes" if use_minutes else "hours"}')

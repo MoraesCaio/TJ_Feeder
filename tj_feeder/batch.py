@@ -9,19 +9,17 @@ from tj_feeder import HEADERS
 from tj_feeder.time_helper import Dates, WorkDay, MONDAY
 
 
-
-@logger.catch
 class Batch:
 
     def __init__(self, holidays_file: str):
         self.dates = Dates(holidays_file)
 
-    def create_month_csv_dir(self, directory: str, year: int, month: int, month_start_workday: int = 24) -> None:
+    def create_month_csv_dir(self, directory: str, year: int, month: int) -> None:
         directory = Path(directory) / f'{year}-{month}'
         directory.mkdir(parents=True, exist_ok=True)
 
         header_line = ','.join(HEADERS)
-        workdays = self.dates.get_month_workdays(year=year, month=month, month_start_workday=month_start_workday)
+        workdays = self.dates.get_month_workdays(year=year, month=month)
 
         for workday in workdays:
             csv_path = directory / f"{workday.strftime('%Y-%m-%d')}.csv"
