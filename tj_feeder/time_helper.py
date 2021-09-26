@@ -1,5 +1,4 @@
 from datetime import timedelta, datetime
-from os import stat_result
 from typing import List, Optional, Tuple, Callable
 import re
 
@@ -7,7 +6,7 @@ import fire
 from loguru import logger
 import pandas as pd
 
-from tj_feeder import CFG_FILE, configs
+from tj_feeder import CFG_FILE, HEADERS, configs
 
 
 SECONDS_PER_MINUTE = 60
@@ -183,7 +182,17 @@ class WorkDay:
     def __init__(self, csv_file: str, cfg_file: str = CFG_FILE):
         self.cfg = configs.load(cfg_file=cfg_file)
 
-        self.df = pd.read_csv(csv_file)
+        self.df = pd.read_csv(csv_file).sort_values(HEADERS[1])
+
+        found_headers = self.df.columns.to_list()
+        if found_headers != HEADERS:
+            raise ValueError(f'Wrong headers for: "{csv_file}"\n' + \
+                             f'Expected headers: {HEADERS}\n' + \
+                             f'Found headers: {found_headers}')
+
+        if not len(self.df.values):
+            raise ValueError(f'"{csv_file}" is empty.')
+
         self.minutes_per_day, self.hours_per_day = WorkDay.parse_time_spent(self.df['time_spent'])
 
         self.worktime_minutes = sum(self.minutes_per_day)
