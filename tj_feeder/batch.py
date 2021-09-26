@@ -1,25 +1,27 @@
 from datetime import datetime
 from pathlib import Path
 from glob import glob
-import re
 
 import fire
+from loguru import logger
 
 from tj_feeder import HEADERS
 from tj_feeder.time_helper import Dates, WorkDay, MONDAY
 
 
+
+@logger.catch
 class Batch:
 
-    def __init__(self):
-        self.dates = Dates()
+    def __init__(self, holidays_file: str):
+        self.dates = Dates(holidays_file)
 
-    def create_month_csv_dir(self, directory: str, year: int, month: int) -> None:
+    def create_month_csv_dir(self, directory: str, year: int, month: int, month_start_workday: int = 24) -> None:
         directory = Path(directory) / f'{year}-{month}'
         directory.mkdir(parents=True, exist_ok=True)
 
         header_line = ','.join(HEADERS)
-        workdays = self.dates.get_month_workdays(year=year, month=month)
+        workdays = self.dates.get_month_workdays(year=year, month=month, month_start_workday=month_start_workday)
 
         for workday in workdays:
             csv_path = directory / f"{workday.strftime('%Y-%m-%d')}.csv"
@@ -41,7 +43,7 @@ class Batch:
                 continue
 
             # parsing date
-            year, month, day = map(int, re.split(r'\D', file.stem))
+            year, month, day = map(int, file.stem.split('-'))
             current_day = datetime(year, month, day)
             current_weekday = current_day.weekday()
 

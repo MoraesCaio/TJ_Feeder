@@ -1,6 +1,5 @@
 {
     "starting_hour": 9,
     "shift_hours": 8,
-    "use_minutes": false,
-    "month_start_workday": 24
+    "use_minutes": false
 }
