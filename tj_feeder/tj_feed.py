@@ -1,4 +1,6 @@
 from typing import Optional
+from pathlib import Path
+import re
 
 import fire
 from loguru import logger
@@ -11,13 +13,16 @@ def define(
     shift_hours: Optional[int] = None,
     month_start_workday: Optional[int] = None,
     use_minutes: Optional[bool] = None,
+    holidays_file: Optional[str] = None,
 ) -> None:
     """Sets default configuration.
 
     Args:
         starting_hour (int, optional): Starting hour of the shift. Defaults to None.
         shift_hours (int, optional): How long is the shift in hours. Defaults to None.
+        month_start_workday (int, optional): Starting month workday; it ranges from 1 to 31. Defaults to None.
         use_minutes (bool, optional): If True, the feed periods will be in minutes; if False, the periods will be in hours. Defaults to None.
+        holidays_file (str, optional): Path to file containing specifying holiday dates in the format yyyy-mm-dd (e.g. "2021-25-12")
     """
 
     cfg_dict = configs.load()
@@ -37,6 +42,10 @@ def define(
     if use_minutes is not None:
         print(f'Defining duration unit as {"minutes" if use_minutes else "hours"}')
         cfg_dict['use_minutes'] = use_minutes
+
+    if holidays_file is not None:
+        print(f'Defining holidays_file as {holidays_file}')
+        cfg_dict['holidays_file'] = holidays_file
 
     configs.save(cfg_dict)
 
