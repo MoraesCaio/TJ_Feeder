@@ -89,3 +89,62 @@ booking communication_9                2021-09-30-09:00 +0.5h                # M
 booking management_6                   2021-09-30-09:30 +0.5h                # Weekly review
 booking my_proj_13                     2021-09-30-10:00 +7.5h   {overtime 1} # Module implementation
 ```
+
+# Batch processing
+
+It's also possible to create and feed multiple CSV files in one go.
+
+## Creating all month's CSV files
+
+To create all necessary CSV files with headers and considering holidays (see: [Set up](#Set-up)) and weekends, run the following command:
+
+```shell
+tj_feed create_month_dir --root-directory <path to directory> --year <integer> --month <integer>
+```
+
+E.g. running this command "`tj_feed create_month_dir --root-directory my_bookings/ --year 2022 --month 1`", will result in the following structure:
+```
+root_directory/
+|__ 2022-01/
+    |__ 2022-01-03.csv
+    |__ 2022-01-04.csv
+    ...
+    |__ 2022-01-31.csv
+```
+
+## Feed all month's CSV files
+
+To generate a feed using the month directory created by
+"`tj_feed create_month_dir`" command, you can use the
+"`tj_feed feed_month_dir`" command.
+
+```shell
+tj_feed feed_month_dir --month-directory <path to directory>
+```
+
+The feed will have one extra line break to separate bookings per day
+and three extra line breaks to separate bookings per week.
+
+E.g. running the command "`tj_feed feed_month_dir --month-directory my_bookings/2022-01`", will have an output similar to this:
+
+```
+{bookings for 2022-01-03}
+
+{bookings for 2022-01-04}
+
+{bookings for 2022-01-05}
+
+{bookings for 2022-01-06}
+
+{bookings for 2022-01-07}
+
+
+
+{bookings for 2022-01-10}
+
+{bookings for 2022-01-11}
+
+{bookings for 2022-01-12}
+
+...
+```
