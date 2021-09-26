@@ -11,6 +11,7 @@ from tj_feeder import CFG_FILE, HEADERS, configs
 
 SECONDS_PER_MINUTE = 60
 SECONDS_PER_HOUR = SECONDS_PER_MINUTE * 60
+MONDAY = 0
 SATURDAY = 5
 SUNDAY = 6
 FLOAT_PATTERN = r"[+]?(\d+(\.\d*)?|\.\d+)"
@@ -130,7 +131,8 @@ class Dates:
                 break
 
             # skipping holidays
-            if current_dt in self.holidays:
+            if current_dt in self.holidays \
+                or self.is_weekend(current_dt):
                 current_dt += day_td
                 continue
 
