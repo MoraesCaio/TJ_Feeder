@@ -14,19 +14,30 @@ pip install tj_feeder
 
 First, you need to set up the starting hour of your shift, the shift duration in hours, and the display mode for task durations (minutes or hours).
 
-To set the starting hour, run the command:
+You will need a holidays file containing specifying holiday dates in the format **yyyy-mm-dd** (e.g. "2021-25-12"). Make sure to have only one date per line. To set the path to this file, run the command:
 ```shell
-tj_feed define_default --starting-hour [integer]
+tj_feed define --holidays-file [path_to_file]
+```
+
+To set the starting hour of your shift, run the command:
+```shell
+tj_feed define --starting-hour [integer]
 ```
 
 To set the shift duration, run the command:
 ```shell
-tj_feed define_default --shift-hours [integer]
+tj_feed define --shift-hours [integer]
+```
+
+To set month starting workday ranging from 1 to 31 (i.e. the first workday accounted for the month's invoice), run the command:
+
+```shell
+tj_feed define --month-start-workday [integer]
 ```
 
 To set the display mode for minutes (in case you want the display mode for hours, you can set this to False), run the command:
 ```shell
-tj_feed define_default --use-minutes [True|False]
+tj_feed define --use-minutes [True|False]
 ```
 
 # Generating Daily Feed
