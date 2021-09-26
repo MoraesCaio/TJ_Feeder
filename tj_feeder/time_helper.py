@@ -253,14 +253,19 @@ class WorkDay:
 
         return daily_feed_str
 
-    def issue_warnings(self):
+    def issue_warnings(self) -> str:
         logger.info('Checking missing time and over time...')
         logger.info(f'work_time {self.worktime_minutes:3} minutes')
 
+        warning_msg = ''
         if td_minutes(self.due_time_td):
-            logger.warning(f"You are missing {td_hours(self.due_time_td)} hours ({td_minutes(self.due_time_td)} minutes)")
+            warning_msg = f"You are missing {td_hours(self.due_time_td):.2f} hours ({td_minutes(self.due_time_td)} minutes)"
         elif td_minutes(self.over_time_td):
-            logger.warning(f"You worked {td_hours(self.over_time_td)} hours ({td_minutes(self.over_time_td)} minutes)")
+            warning_msg = f"You've worked overtime of {td_hours(self.over_time_td):.2f} hours ({td_minutes(self.over_time_td)} minutes)"
+
+        logger.warning(warning_msg)
+
+        return warning_msg
 
 
 if __name__ == "__main__":
