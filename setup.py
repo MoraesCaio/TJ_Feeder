@@ -5,7 +5,7 @@ import setuptools
 
 setuptools.setup(
     name='tj_feeder',
-    version='0.0.5',
+    version='0.1.0',
     description='Tool to generate daily input for Task Juggler',
     author='Caio Moraes',
     author_email='caiomoraes.cesar@gmail.com',
