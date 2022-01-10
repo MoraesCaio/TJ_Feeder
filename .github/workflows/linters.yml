@@ -32,4 +32,4 @@ jobs:
         mypy --show-column-numbers --ignore-missing-import --follow-imports=silent --exclude build .
     - name: Analysing the code with pylint
       run: |
-        pylint `ls -R | grep .py$ | xargs`
+        find . -not \( -path ./build -prune \) -not \( -path ./dist -prune \) -name "*.py" | xargs pylint
