@@ -273,7 +273,7 @@ class WorkDay:
         self.due_time_td = WorkDay.calculate_due_time(
             self.expected_worktime_minutes, self.worktime_minutes
         )
-        self.over_time_td = WorkDay.calculate_over_time(
+        self.overtime_td = WorkDay.calculate_overtime(
             self.expected_worktime_minutes, self.worktime_minutes
         )
 
@@ -301,7 +301,7 @@ class WorkDay:
         return minutes_per_day, hours_per_day
 
     @staticmethod
-    def calculate_over_time(
+    def calculate_overtime(
         expected_worktime_minutes: T_NUMBER, worktime_minutes: T_NUMBER
     ) -> timedelta:
         """Calculate due time using the expected shift duration and actual
@@ -378,7 +378,7 @@ class WorkDay:
             # over time
             cummulative_td += timedelta(minutes=self.minutes_per_day[i])
             if cummulative_td > shift_td:
-                spent_time = f"{spent_time:7} {{over_time 1}}"
+                spent_time = f"{spent_time:7} {{overtime 1}}"
 
             # feed line
             daily_feed_str += (
@@ -408,11 +408,11 @@ class WorkDay:
                 f"You are missing {td_hours(self.due_time_td):.2f}"
                 f" hours ({td_minutes(self.due_time_td)} minutes)"
             )
-        elif td_minutes(self.over_time_td):
+        elif td_minutes(self.overtime_td):
             warning_msg = (
                 f"You've worked overtime of "
-                f"{td_hours(self.over_time_td):.2f} hours "
-                f"({td_minutes(self.over_time_td)} minutes)"
+                f"{td_hours(self.overtime_td):.2f} hours "
+                f"({td_minutes(self.overtime_td)} minutes)"
             )
 
         if warning_msg:
