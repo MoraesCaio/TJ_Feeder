@@ -74,8 +74,7 @@ def parse_time_string(time: str) -> Tuple[int, float]:
 
 
 class Dates:
-    """Class to handle calendar days
-    """
+    """Class to handle calendar days"""
 
     cfg = configs.load()
 
@@ -232,7 +231,7 @@ class Dates:
 
 class WorkDay:
     """Class that encapsulates function regarding time calculation of
-        bookings for a given workday.
+    bookings for a given workday.
     """
 
     @logger.catch(reraise=True)

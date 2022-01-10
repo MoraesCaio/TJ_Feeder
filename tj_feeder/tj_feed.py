@@ -14,8 +14,7 @@ from tj_feeder.batch import Batch
 
 
 class TJFeed:
-    """Module interface class
-    """
+    """Module interface class"""
 
     def __init__(self, log_level: Optional[T_LOG_LEVEL]) -> None:
         """Constructor
@@ -152,8 +151,7 @@ class TJFeed:
 
 @logger.catch(reraise=True)
 def main() -> None:
-    """Main function. Used to call fire wrapper.
-    """
+    """Main function. Used to call fire wrapper."""
     fire.Fire(TJFeed)
 
 

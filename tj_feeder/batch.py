@@ -15,13 +15,12 @@ from tj_feeder.time_helper import MONDAY, Dates, WorkDay
 
 
 class Batch:
-    """Create and consume month CSV directories
-    """
+    """Create and consume month CSV directories"""
 
     def __init__(self) -> None:
         """Constructor
-            dates (timehelper.Dates): Dates object with date utils (e.g.
-                current holidays list)
+        dates (timehelper.Dates): Dates object with date utils (e.g.
+            current holidays list)
         """
         self.dates = Dates()
 
