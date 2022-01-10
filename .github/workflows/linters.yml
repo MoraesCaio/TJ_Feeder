@@ -17,11 +17,19 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install isort black flake8 flake8-annotations pylint
-    - name: Analysing the code with pylint
+        pip install isort black flake8 flake8-annotations mypy pylint .
+    - name: Analysing the code with isort
       run: |
         isort --check-only .
+    - name: Analysing the code with black
+      run: |
         black --line-length=79 --check --diff .
+    - name: Analysing the code with flake8 (plus flake8-annotations)
+      run: |
         flake8 --extend-exclude build/ --ignore=ANN101,ANN102,W503,W504 .
+    - name: Analysing the code with mypy
+      run: |
         mypy --show-column-numbers --ignore-missing-import --follow-imports=silent --exclude build .
-        pylint `ls -R | grep .py$ | xargs`
+    - name: Analysing the code with pylint
+      run: |
+        find . -not \( -path ./build -prune \) -not \( -path ./dist -prune \) -name "*.py" | xargs pylint
