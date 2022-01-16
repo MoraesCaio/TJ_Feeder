@@ -490,8 +490,12 @@ class WorkDay:
             daily_feed_str += (
                 f"booking {self.dataframe['issue_name'].iloc[i]:30} "
                 f"{fmt_time} {spent_time:20} "
-                f"# {self.dataframe['issue_description'].iloc[i]}\n"
             )
+            description = f'{self.dataframe["issue_description"].iloc[i]}'
+            if description != "nan":
+                daily_feed_str += f"# {description}\n"
+            else:
+                daily_feed_str += "\n"
 
             # next datetime to show
             cur_dt += timedelta(minutes=self.minutes_per_day[i])
