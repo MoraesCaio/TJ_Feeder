@@ -5,29 +5,35 @@ import re
 from datetime import datetime
 from glob import glob
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import fire
 from loguru import logger
 
-from tj_feeder import HEADERS, T_PATH
+from tj_feeder import CFG_FILE, HEADERS, T_PATH, configs
 from tj_feeder.time_helper import MONDAY, Dates, WorkDay
 
 
 class Batch:
     """Create and consume month CSV directories"""
 
-    def __init__(self) -> None:
+    def __init__(self, cfg_file: Union[Path, str] = CFG_FILE) -> None:
         """Constructor
         dates (timehelper.Dates): Dates object with date utils (e.g.
             current holidays list)
         """
         self.dates = Dates()
+        if not Path(cfg_file).exists():
+            raise FileNotFoundError(f"File {cfg_file} not found.")
+        self.cfg = configs.load(cfg_file)
 
     def create_month_csv_dir(
-        self, directory: T_PATH, year: int, month: int
+        self,
+        directory: T_PATH,
+        year: int,
+        month: int,
+        time_mode: Optional[str] = None,
     ) -> None:
-
         """Creates empty CSV files (i.e. with columns only) regarding holidays
             and weekends.
 
@@ -35,11 +41,17 @@ class Batch:
             directory (T_PATH): Path to root directory
             year (int): Year of the CSV files
             month (int): Month of the CSV files
+            time_mode (Optional[str]): Either 'schedule_mode' (expects
+                'time_start' and 'time_end' columns) or 'duration_mode'
+                (expects 'time_spent' column). Defaults to None.
         """
         directory = Path(directory) / f"{year}-{month}"
         directory.mkdir(parents=True, exist_ok=True)
 
-        header_line = ",".join(HEADERS)
+        if time_mode is None:
+            time_mode = self.cfg["time_mode"]
+
+        header_line = ",".join(HEADERS[time_mode])
         workdays = self.dates.get_month_workdays(year=year, month=month)
 
         for workday in workdays:

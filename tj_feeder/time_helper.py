@@ -2,7 +2,8 @@
 """
 import re
 from datetime import datetime, timedelta
-from typing import Callable, List, Tuple, cast
+from pathlib import Path
+from typing import Callable, List, Tuple, Union, cast
 
 import fire
 import pandas as pd
@@ -18,72 +19,16 @@ SUNDAY = 6
 FLOAT_PATTERN = r"[+]?(\d+(\.\d*)?|\.\d+)"
 
 
-def td_minutes(time_delta: timedelta) -> int:
-    """Parse timedelta object into minutes (int type)
-
-    Args:
-        time_delta (timedelta): Time delta of a booking
-
-    Returns:
-        int: Total minutes worked
-    """
-    return int(time_delta.total_seconds() / SECONDS_PER_MINUTE)
-
-
-def td_hours(time_delta: timedelta) -> float:
-    """Parse timedelta object into a fraction of hours (float type)
-
-    Args:
-        time_delta (timedelta): Time delta of a booking
-
-    Returns:
-        float: Total hours worked
-    """
-    return time_delta.total_seconds() / SECONDS_PER_HOUR
-
-
-def parse_time_string(time: str) -> Tuple[int, float]:
-    """Considering the following formats: 30min and 0.5h (a preceding '+'
-        symbol is optional), converts the input from one of those formats
-        to the other.
-
-    Args:
-        time (str): Time string
-
-    Raises:
-        ValueError: Raised if the input is in neither of the formats
-
-    Returns:
-        Tuple[int, float]: Tuple with both formats: (minutes, hours)
-    """
-    if not re.fullmatch(FLOAT_PATTERN + r"(min|h)", time):
-        raise ValueError(
-            f"Invalid period found: {time}. "
-            f"Please inform with either of these formats: "
-            f"XYmin; X.Yh"
-        )
-
-    if "h" in time:
-        hours = float(time.replace("h", ""))
-        minutes = round(hours * 60)
-    else:
-        minutes = int(time.replace("+", "").replace("min", ""))
-        hours = round(minutes / 60, 2)
-
-    return minutes, hours
-
-
 class Dates:
     """Class to handle calendar days"""
 
-    cfg = configs.load()
-
-    def __init__(self) -> None:
+    def __init__(self, cfg_file: Union[Path, str] = CFG_FILE) -> None:
         """Constructor
 
         Raises:
             KeyError: Raised if holidays file path is not set.
         """
+        self.cfg = configs.load(cfg_file)
         try:
             self.holidays_file = self.cfg["holidays_file"]
         except KeyError as error:
@@ -143,7 +88,7 @@ class Dates:
                 False, otherwise.
         """
         return (
-            date.day == Dates.cfg["month_start_workday"]
+            date.day == Dates().cfg["month_start_workday"]
             and date.month != month
         )
 
@@ -225,7 +170,7 @@ class Dates:
             stop_function=lambda dt: Dates.is_next_month(dt, month),
             year=year,
             month=month,
-            start_workday=Dates.cfg["month_start_workday"],
+            start_workday=Dates().cfg["month_start_workday"],
         )
 
 
@@ -250,13 +195,37 @@ class WorkDay:
         """
         self.cfg = configs.load(cfg_file=cfg_file)
 
-        self.dataframe = pd.read_csv(csv_file).sort_values(HEADERS[1])
+        self.dataframe = pd.read_csv(csv_file).sort_values("issue_name")
 
+        time_mode = ""
         found_headers = self.dataframe.columns.to_list()
-        if set(found_headers) != set(HEADERS):
+        for time_mode, headers_set in HEADERS.items():
+            if set(found_headers) == set(headers_set):
+                break
+        else:
+            # Building string for possible modes:
+            #
+            # Wrong headers for: "journals/feeds/2021-12/2022-01-21.csv"
+            # Expected headers:
+            #     - time_spent
+            #     - issue_name
+            #     - issue_description
+            # OR
+            #     - start_time
+            #     - end_time
+            #     - issue_name
+            #     - issue_description
+            # Found headers: ['time_spent', 'issue_name', 'issue_description']
+            expected_headers = "\n\t- " + "\nOR\n\t- ".join(
+                [
+                    "\n\t- ".join(header_group)
+                    for header_group in HEADERS.values()
+                ]
+            )
+
             raise ValueError(
                 f'Wrong headers for: "{csv_file}"\n'
-                f"Expected headers: {HEADERS}\n"
+                f"Expected headers: {expected_headers}\n"
                 f"Found headers: {found_headers}"
             )
 
@@ -264,7 +233,7 @@ class WorkDay:
             raise ValueError(f'"{csv_file}" is empty.')
 
         self.minutes_per_day, self.hours_per_day = WorkDay.parse_time_spent(
-            self.dataframe["time_spent"]
+            self.dataframe, time_mode
         )
 
         self.worktime_minutes = sum(self.minutes_per_day)
@@ -278,14 +247,139 @@ class WorkDay:
         )
 
     @staticmethod
+    def fmt_time_schedule(time_schedule: str) -> str:
+        """Standardize time schedule input to the following format "01:23"
+        (i.e. "2-digits:2-digits")
+
+        Args:
+            time_schedule (str): A time mark with 3 to 4 digits and an optional
+                separator.
+
+        Returns:
+            str: Formatted time schedule string
+        """
+        time_schedule = re.sub(r"\D", "", time_schedule)
+        if len(time_schedule) > 4:
+            raise ValueError(
+                "Invalid time schedule: more than 4 digits"
+                f" (got {len(time_schedule)})"
+            )
+        hours = time_schedule[:2]
+        minutes = time_schedule[2:4]
+        time_schedule = f"{hours:>02}:{minutes:>02}"
+        return time_schedule
+
+    @staticmethod
+    def td_minutes(time_delta: timedelta) -> int:
+        """Parse timedelta object into minutes (int type)
+
+        Args:
+            time_delta (timedelta): Time delta of a booking
+
+        Returns:
+            int: Total minutes worked
+        """
+        return int(time_delta.total_seconds() / SECONDS_PER_MINUTE)
+
+    @staticmethod
+    def td_hours(time_delta: timedelta) -> float:
+        """Parse timedelta object into a fraction of hours (float type)
+
+        Args:
+            time_delta (timedelta): Time delta of a booking
+
+        Returns:
+            float: Total hours worked
+        """
+        return time_delta.total_seconds() / SECONDS_PER_HOUR
+
+    @staticmethod
+    def parse_time_durations(
+        time_dataframe: pd.DataFrame,
+    ) -> List[Tuple[int, float]]:
+        """Considering the following formats: 30min and 0.5h (a preceding '+'
+            symbol is optional), converts the input from one of those formats
+            to the other.
+
+        Args:
+            time (str): Time string
+
+        Raises:
+            ValueError: Raised if the input is in neither of the formats
+
+        Returns:
+            List[Tuple[int, float]]: List of Tuples with both
+                formats: (minutes, hours)
+        """
+        minute_hour_durations = []
+
+        for time in time_dataframe["time_spent"]:
+            if not re.fullmatch(FLOAT_PATTERN + r"(min|h)", time):
+                raise ValueError(
+                    f"Invalid period found: {time}. "
+                    f"Please inform with either of these formats: "
+                    f"XYmin; X.Yh"
+                )
+
+            if "h" in time:
+                hours = float(time.replace("h", ""))
+                minutes = round(hours * 60)
+            else:
+                minutes = int(time.replace("+", "").replace("min", ""))
+                hours = round(minutes / 60, 2)
+
+            minute_hour_durations.append((minutes, hours))
+
+        return minute_hour_durations
+
+    @staticmethod
+    def parse_time_schedules(
+        time_dataframe: pd.DataFrame,
+    ) -> List[Tuple[int, float]]:
+        """Considering the following format: "10:20,12:35", calculate the
+        duration and convert into both possible duration formats: total int
+        minutes and total float hours.
+
+        E.g.: "10:20,12:35" -> [135], [2.25]
+
+        Args:
+            time_dataframe (pd.DataFrame): Dataframe with time_start and
+            time_end columns.
+
+        Returns:
+            List[Tuple[int, float]]: List of Tuples with both
+                formats: (minutes, hours)
+        """
+        starts = time_dataframe["start_time"]
+        ends = time_dataframe["end_time"]
+
+        minute_hour_durations = []
+
+        for start, end in zip(starts, ends):
+            start = datetime.strptime(
+                WorkDay.fmt_time_schedule(start), "%H:%M"
+            )
+            end = datetime.strptime(WorkDay.fmt_time_schedule(end), "%H:%M")
+
+            duration = end - start
+
+            total_seconds = duration.total_seconds()
+            total_minutes = int(total_seconds / 60)
+
+            minute_hour_durations.append((total_minutes, total_minutes / 60))
+
+        return minute_hour_durations
+
+    @staticmethod
     def parse_time_spent(
-        time_spent: pd.Series,
+        time_dataframe: pd.Series,
+        time_mode: str,
     ) -> Tuple[List[T_NUMBER], List[T_NUMBER]]:
         """Parse time worked on each booking into both forms: by minutes and by
             hours
 
         Args:
-            time_spent (pd.Series): Series of str durations
+            time_dataframe (pd.Series): Series of str durations
                 (e.g. XYmin or X.Yh)
 
         Returns:
@@ -293,10 +387,20 @@ class WorkDay:
             contains integers for the minutes worked. The second contains float
             equivalents for hours worked.
         """
-        minute_hour_times = [parse_time_string(ts) for ts in time_spent]
+        if time_mode == "schedule_mode":
+            minute_hour_durations = WorkDay.parse_time_schedules(
+                time_dataframe
+            )
+        elif time_mode == "duration_mode":
+            minute_hour_durations = WorkDay.parse_time_durations(
+                time_dataframe
+            )
+        else:
+            raise ValueError(f"Uknown time mode (got {time_mode})")
+
         minutes_per_day, hours_per_day = cast(
             Tuple[List[T_NUMBER], List[T_NUMBER]],
-            tuple(map(list, zip(*minute_hour_times))),
+            tuple(map(list, zip(*minute_hour_durations))),
         )
         return minutes_per_day, hours_per_day
 
@@ -338,7 +442,7 @@ class WorkDay:
         """
         return timedelta(
             minutes=min(
-                int(expected_worktime_minutes) - int(worktime_minutes),
+                max(0, int(expected_worktime_minutes) - int(worktime_minutes)),
                 int(expected_worktime_minutes),
             )
         )
@@ -403,16 +507,16 @@ class WorkDay:
         logger.trace(f"work_time {self.worktime_minutes:3} minutes")
 
         warning_msg = ""
-        if td_minutes(self.due_time_td):
+        if self.td_minutes(self.due_time_td):
             warning_msg = (
-                f"You are missing {td_hours(self.due_time_td):.2f}"
-                f" hours ({td_minutes(self.due_time_td)} minutes)"
+                f"You are missing {self.td_hours(self.due_time_td):.2f}"
+                f" hours ({self.td_minutes(self.due_time_td)} minutes)"
             )
-        elif td_minutes(self.overtime_td):
+        elif self.td_minutes(self.overtime_td):
             warning_msg = (
                 f"You've worked overtime of "
-                f"{td_hours(self.overtime_td):.2f} hours "
-                f"({td_minutes(self.overtime_td)} minutes)"
+                f"{self.td_hours(self.overtime_td):.2f} hours "
+                f"({self.td_minutes(self.overtime_td)} minutes)"
             )
 
         if warning_msg:
