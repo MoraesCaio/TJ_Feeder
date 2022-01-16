@@ -19,105 +19,6 @@ SUNDAY = 6
 FLOAT_PATTERN = r"[+]?(\d+(\.\d*)?|\.\d+)"
 
 
-def td_minutes(time_delta: timedelta) -> int:
-    """Parse timedelta object into minutes (int type)
-
-    Args:
-        time_delta (timedelta): Time delta of a booking
-
-    Returns:
-        int: Total minutes worked
-    """
-    return int(time_delta.total_seconds() / SECONDS_PER_MINUTE)
-
-
-def td_hours(time_delta: timedelta) -> float:
-    """Parse timedelta object into a fraction of hours (float type)
-
-    Args:
-        time_delta (timedelta): Time delta of a booking
-
-    Returns:
-        float: Total hours worked
-    """
-    return time_delta.total_seconds() / SECONDS_PER_HOUR
-
-
-def parse_time_durations(
-    time_dataframe: pd.DataFrame,
-) -> List[Tuple[int, float]]:
-    """Considering the following formats: 30min and 0.5h (a preceding '+'
-        symbol is optional), converts the input from one of those formats
-        to the other.
-
-    Args:
-        time (str): Time string
-
-    Raises:
-        ValueError: Raised if the input is in neither of the formats
-
-    Returns:
-        List[Tuple[int, float]]: List of Tuples with both
-            formats: (minutes, hours)
-    """
-    minute_hour_durations = []
-
-    for time in time_dataframe["time_spent"]:
-        if not re.fullmatch(FLOAT_PATTERN + r"(min|h)", time):
-            raise ValueError(
-                f"Invalid period found: {time}. "
-                f"Please inform with either of these formats: "
-                f"XYmin; X.Yh"
-            )
-
-        if "h" in time:
-            hours = float(time.replace("h", ""))
-            minutes = round(hours * 60)
-        else:
-            minutes = int(time.replace("+", "").replace("min", ""))
-            hours = round(minutes / 60, 2)
-
-        minute_hour_durations.append((minutes, hours))
-
-    return minute_hour_durations
-
-
-def parse_time_schedules(
-    time_dataframe: pd.DataFrame,
-) -> List[Tuple[int, float]]:
-    """Considering the following format: "10:20,12:35", calculate the duration
-    and convert into both possible duration formats: total int minutes and
-    total float hours.
-
-    E.g.: "10:20,12:35" -> [135], [2.25]
-
-    Args:
-        time_dataframe (pd.DataFrame): Dataframe with time_start and time_end
-            columns.
-
-    Returns:
-        List[Tuple[int, float]]: List of Tuples with both
-            formats: (minutes, hours)
-    """
-    starts = time_dataframe["start_time"]
-    ends = time_dataframe["end_time"]
-
-    minute_hour_durations = []
-
-    for start, end in zip(starts, ends):
-        start = datetime.strptime(WorkDay._fmt_time_schedule(start), "%H:%M")
-        end = datetime.strptime(WorkDay._fmt_time_schedule(end), "%H:%M")
-
-        duration = end - start
-
-        total_seconds = duration.total_seconds()
-        total_minutes = int(total_seconds / 60)
-
-        minute_hour_durations.append((total_minutes, total_minutes / 60))
-
-    return minute_hour_durations
-
-
 class Dates:
     """Class to handle calendar days"""
 
@@ -369,6 +270,107 @@ class WorkDay:
         return time_schedule
 
     @staticmethod
+    def td_minutes(time_delta: timedelta) -> int:
+        """Parse timedelta object into minutes (int type)
+
+        Args:
+            time_delta (timedelta): Time delta of a booking
+
+        Returns:
+            int: Total minutes worked
+        """
+        return int(time_delta.total_seconds() / SECONDS_PER_MINUTE)
+
+    @staticmethod
+    def td_hours(time_delta: timedelta) -> float:
+        """Parse timedelta object into a fraction of hours (float type)
+
+        Args:
+            time_delta (timedelta): Time delta of a booking
+
+        Returns:
+            float: Total hours worked
+        """
+        return time_delta.total_seconds() / SECONDS_PER_HOUR
+
+    @staticmethod
+    def parse_time_durations(
+        time_dataframe: pd.DataFrame,
+    ) -> List[Tuple[int, float]]:
+        """Considering the following formats: 30min and 0.5h (a preceding '+'
+            symbol is optional), converts the input from one of those formats
+            to the other.
+
+        Args:
+            time (str): Time string
+
+        Raises:
+            ValueError: Raised if the input is in neither of the formats
+
+        Returns:
+            List[Tuple[int, float]]: List of Tuples with both
+                formats: (minutes, hours)
+        """
+        minute_hour_durations = []
+
+        for time in time_dataframe["time_spent"]:
+            if not re.fullmatch(FLOAT_PATTERN + r"(min|h)", time):
+                raise ValueError(
+                    f"Invalid period found: {time}. "
+                    f"Please inform with either of these formats: "
+                    f"XYmin; X.Yh"
+                )
+
+            if "h" in time:
+                hours = float(time.replace("h", ""))
+                minutes = round(hours * 60)
+            else:
+                minutes = int(time.replace("+", "").replace("min", ""))
+                hours = round(minutes / 60, 2)
+
+            minute_hour_durations.append((minutes, hours))
+
+        return minute_hour_durations
+
+    @staticmethod
+    def parse_time_schedules(
+        time_dataframe: pd.DataFrame,
+    ) -> List[Tuple[int, float]]:
+        """Considering the following format: "10:20,12:35", calculate the duration
+        and convert into both possible duration formats: total int minutes and
+        total float hours.
+
+        E.g.: "10:20,12:35" -> [135], [2.25]
+
+        Args:
+            time_dataframe (pd.DataFrame): Dataframe with time_start and time_end
+                columns.
+
+        Returns:
+            List[Tuple[int, float]]: List of Tuples with both
+                formats: (minutes, hours)
+        """
+        starts = time_dataframe["start_time"]
+        ends = time_dataframe["end_time"]
+
+        minute_hour_durations = []
+
+        for start, end in zip(starts, ends):
+            start = datetime.strptime(
+                WorkDay._fmt_time_schedule(start), "%H:%M"
+            )
+            end = datetime.strptime(WorkDay._fmt_time_schedule(end), "%H:%M")
+
+            duration = end - start
+
+            total_seconds = duration.total_seconds()
+            total_minutes = int(total_seconds / 60)
+
+            minute_hour_durations.append((total_minutes, total_minutes / 60))
+
+        return minute_hour_durations
+
+    @staticmethod
     def parse_time_spent(
         time_dataframe: pd.Series,
         time_mode: str,
@@ -386,9 +388,13 @@ class WorkDay:
             equivalents for hours worked.
         """
         if time_mode == "schedule_mode":
-            minute_hour_durations = parse_time_schedules(time_dataframe)
+            minute_hour_durations = WorkDay.parse_time_schedules(
+                time_dataframe
+            )
         elif time_mode == "duration_mode":
-            minute_hour_durations = parse_time_durations(time_dataframe)
+            minute_hour_durations = WorkDay.parse_time_durations(
+                time_dataframe
+            )
         else:
             raise ValueError(f"Uknown time mode (got {time_mode})")
 
@@ -501,16 +507,16 @@ class WorkDay:
         logger.trace(f"work_time {self.worktime_minutes:3} minutes")
 
         warning_msg = ""
-        if td_minutes(self.due_time_td):
+        if self.td_minutes(self.due_time_td):
             warning_msg = (
-                f"You are missing {td_hours(self.due_time_td):.2f}"
-                f" hours ({td_minutes(self.due_time_td)} minutes)"
+                f"You are missing {self.td_hours(self.due_time_td):.2f}"
+                f" hours ({self.td_minutes(self.due_time_td)} minutes)"
             )
-        elif td_minutes(self.overtime_td):
+        elif self.td_minutes(self.overtime_td):
             warning_msg = (
                 f"You've worked overtime of "
-                f"{td_hours(self.overtime_td):.2f} hours "
-                f"({td_minutes(self.overtime_td)} minutes)"
+                f"{self.td_hours(self.overtime_td):.2f} hours "
+                f"({self.td_minutes(self.overtime_td)} minutes)"
             )
 
         if warning_msg:
