@@ -247,7 +247,7 @@ class WorkDay:
         )
 
     @staticmethod
-    def _fmt_time_schedule(time_schedule: str) -> str:
+    def fmt_time_schedule(time_schedule: str) -> str:
         """Standardize time schedule input to the following format "01:23"
         (i.e. "2-digits:2-digits")
 
@@ -336,15 +336,15 @@ class WorkDay:
     def parse_time_schedules(
         time_dataframe: pd.DataFrame,
     ) -> List[Tuple[int, float]]:
-        """Considering the following format: "10:20,12:35", calculate the duration
-        and convert into both possible duration formats: total int minutes and
-        total float hours.
+        """Considering the following format: "10:20,12:35", calculate the
+        duration and convert into both possible duration formats: total int
+        minutes and total float hours.
 
         E.g.: "10:20,12:35" -> [135], [2.25]
 
         Args:
-            time_dataframe (pd.DataFrame): Dataframe with time_start and time_end
-                columns.
+            time_dataframe (pd.DataFrame): Dataframe with time_start and
+            time_end columns.
 
         Returns:
             List[Tuple[int, float]]: List of Tuples with both
@@ -357,9 +357,9 @@ class WorkDay:
 
         for start, end in zip(starts, ends):
             start = datetime.strptime(
-                WorkDay._fmt_time_schedule(start), "%H:%M"
+                WorkDay.fmt_time_schedule(start), "%H:%M"
             )
-            end = datetime.strptime(WorkDay._fmt_time_schedule(end), "%H:%M")
+            end = datetime.strptime(WorkDay.fmt_time_schedule(end), "%H:%M")
 
             duration = end - start
 
