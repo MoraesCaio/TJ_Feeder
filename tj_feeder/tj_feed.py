@@ -35,6 +35,7 @@ class TJFeed:
         holidays_file: Optional[Union[Path, str]] = None,
         time_mode: Optional[str] = None,
     ) -> None:
+        # pylint: disable=too-many-arguments
         """Sets default configuration.
 
         Args:
