@@ -123,7 +123,12 @@ class TJFeed:
         return daily_feed_str
 
     @staticmethod
-    def create_month_dir(root_directory: str, year: int, month: int) -> None:
+    def create_month_dir(
+        root_directory: str,
+        year: int,
+        month: int,
+        time_mode: Optional[str] = None,
+    ) -> None:
         """Creates all necessary CSV files considering holidays and weekends.
 
         E.g.:
@@ -138,8 +143,11 @@ class TJFeed:
             root_directory (str): Directory to be created
             year (int): Current year
             month (int): Current month
+            time_mode (Optional[str]): Either 'schedule_mode' (expects
+                'time_start' and 'time_end' columns) or 'duration_mode'
+                (expects 'time_spent' column). Defaults to None.
         """
-        Batch().create_month_csv_dir(root_directory, year, month)
+        Batch().create_month_csv_dir(root_directory, year, month, time_mode)
 
     @staticmethod
     def feed_month_dir(month_directory: T_PATH) -> Optional[str]:

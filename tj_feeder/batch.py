@@ -32,7 +32,7 @@ class Batch:
         directory: T_PATH,
         year: int,
         month: int,
-        time_mode: Optional[str],
+        time_mode: Optional[str] = None,
     ) -> None:
         """Creates empty CSV files (i.e. with columns only) regarding holidays
             and weekends.
@@ -43,7 +43,7 @@ class Batch:
             month (int): Month of the CSV files
             time_mode (Optional[str]): Either 'schedule_mode' (expects
                 'time_start' and 'time_end' columns) or 'duration_mode'
-                (expects 'time_spent' column)
+                (expects 'time_spent' column). Defaults to None.
         """
         directory = Path(directory) / f"{year}-{month}"
         directory.mkdir(parents=True, exist_ok=True)
