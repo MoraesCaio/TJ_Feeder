@@ -365,6 +365,8 @@ class WorkDay:
 
             total_seconds = duration.total_seconds()
             total_minutes = int(total_seconds / 60)
+            # TODO get this value 5 (time precision) from tj or user settings
+            total_minutes = int(round(total_minutes / 5) * 5)
 
             minute_hour_durations.append((total_minutes, total_minutes / 60))
 
