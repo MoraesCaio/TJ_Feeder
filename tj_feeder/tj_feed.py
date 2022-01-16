@@ -3,12 +3,12 @@
 import re
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import fire
 from loguru import logger
 
-from tj_feeder import T_LOG_LEVEL, T_PATH, configs
+from tj_feeder import HEADERS, T_LOG_LEVEL, T_PATH, configs
 from tj_feeder import time_helper as th
 from tj_feeder.batch import Batch
 
@@ -32,7 +32,8 @@ class TJFeed:
         shift_hours: Optional[int] = None,
         month_start_workday: Optional[int] = None,
         use_minutes: Optional[bool] = None,
-        holidays_file: Optional[str] = None,
+        holidays_file: Optional[Union[Path, str]] = None,
+        time_mode: Optional[str] = None,
     ) -> None:
         """Sets default configuration.
 
@@ -46,21 +47,35 @@ class TJFeed:
             use_minutes (bool, optional): If True, the feed periods will be in
                 minutes; if False, the periods will be in hours.
                     Defaults to None.
-            holidays_file (str, optional): Path to file containing specifying
+            holidays_file (Optional[Union[Path, str]], optional): Path to file
+                containing specifying
                 holiday dates in the format yyyy-mm-dd (e.g. "2021-25-12")
+            time_mode (Optional[str], optional): Set to 'schedule_mode', to
+                use 'start_time' and 'end_time' columns. Set to 'duration_mode'
+                to use 'time_spent' column. Defaults to None.
         """
 
         cfg_dict = configs.load()
 
         if starting_hour is not None:
+            if not 0 <= starting_hour <= 23:
+                print("Use an integer between 0 and 23 for the starting hour.")
+
             print(f"Defining starting hour as {starting_hour}")
             cfg_dict["starting_hour"] = starting_hour
 
         if shift_hours is not None:
+            if not 0 <= shift_hours <= 23:
+                print("Use an integer between 0 and 23 for the shift hours.")
             print(f"Defining shift duration as {shift_hours} hours")
             cfg_dict["shift_hours"] = shift_hours
 
         if month_start_workday is not None:
+            if not 1 <= month_start_workday <= 31:
+                print(
+                    "Use an integer between 1 and 31 for the month starting"
+                    " workday."
+                )
             print(f"Defining starting hour as {month_start_workday}")
             cfg_dict["month_start_workday"] = month_start_workday
 
@@ -71,7 +86,21 @@ class TJFeed:
 
         if holidays_file is not None:
             print(f"Defining holidays_file as {holidays_file}")
+            if not Path(holidays_file).exists():
+                print(f"File {holidays_file} not found.")
+                return
             cfg_dict["holidays_file"] = holidays_file
+
+        if time_mode is not None:
+            if time_mode not in HEADERS:
+                allowed_values = "\n\t- ".join(HEADERS)
+                print(
+                    "Time mode should be one of the following:"
+                    f"\n\t- {allowed_values}"
+                )
+                return
+            print(f"Defining time_mode as {time_mode}")
+            cfg_dict["time_mode"] = time_mode
 
         configs.save(cfg_dict)
 
