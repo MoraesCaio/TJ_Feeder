@@ -34,7 +34,7 @@ class Dates:
         except KeyError as error:
             raise KeyError(
                 'Please set the path to holidays_file with "tj_feed define'
-                '--holidays-file <path_to_holiday_file>"'
+                ' --holidays-file <path_to_holiday_file>"'
             ) from error
         self.holidays = Dates.parse_holidays_file(self.holidays_file)
 
