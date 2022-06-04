@@ -78,7 +78,9 @@ class Batch:
             )
             return None
 
-        files = [Path(file) for file in glob(f'{month_directory / "*.csv"}')]
+        files = sorted(
+            [Path(file) for file in glob(f'{month_directory / "*.csv"}')]
+        )
         logger.trace(f"month_directory: {month_directory}")
         logger.trace(f"Files found: {list(map(str, files))}")
 
