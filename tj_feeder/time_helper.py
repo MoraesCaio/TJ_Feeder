@@ -179,7 +179,7 @@ class WorkDay:
     bookings for a given workday.
     """
 
-    @logger.catch(reraise=True)
+    # @logger.catch(reraise=True)
     def __init__(self, csv_file: T_PATH, cfg_file: T_PATH = CFG_FILE) -> None:
         """
         Constructor
@@ -350,16 +350,18 @@ class WorkDay:
             List[Tuple[int, float]]: List of Tuples with both
                 formats: (minutes, hours)
         """
-        starts = time_dataframe["start_time"]
-        ends = time_dataframe["end_time"]
+        starts = time_dataframe["start_time"].astype("str")
+        ends = time_dataframe["end_time"].astype("str")
 
         minute_hour_durations = []
 
         for start, end in zip(starts, ends):
             start = datetime.strptime(
-                WorkDay.fmt_time_schedule(start), "%H:%M"
+                WorkDay.fmt_time_schedule(start.zfill(4)), "%H:%M"
             )
-            end = datetime.strptime(WorkDay.fmt_time_schedule(end), "%H:%M")
+            end = datetime.strptime(
+                WorkDay.fmt_time_schedule(end.zfill(4)), "%H:%M"
+            )
 
             duration = end - start
 
@@ -394,6 +396,9 @@ class WorkDay:
                 time_dataframe
             )
         elif time_mode == "duration_mode":
+            time_dataframe["time_spent"] = time_dataframe["time_spent"].astype(
+                str
+            )
             minute_hour_durations = WorkDay.parse_time_durations(
                 time_dataframe
             )
@@ -466,10 +471,8 @@ class WorkDay:
         # units
         if self.cfg["use_minutes"]:
             values_per_day = self.minutes_per_day
-            unit = "min"
         else:
             values_per_day = self.hours_per_day
-            unit = "h"
 
         # main loop
         shift_td = timedelta(hours=self.cfg["shift_hours"])
@@ -479,7 +482,10 @@ class WorkDay:
             fmt_time = cur_dt.strftime("%Y-%m-%d-%H:%M")
 
             # spent time
-            spent_time = f"+{values_per_day[i]}{unit}"
+            if self.cfg["use_minutes"]:
+                spent_time = f"+{values_per_day[i]}min"
+            else:
+                spent_time = f"+{values_per_day[i]:.2f}h"
 
             # over time
             cummulative_td += timedelta(minutes=self.minutes_per_day[i])

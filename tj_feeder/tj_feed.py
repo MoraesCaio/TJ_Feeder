@@ -187,7 +187,7 @@ class TJFeed:
         return Batch().feed_month_csv_dir(month_directory)
 
 
-@logger.catch(reraise=True)
+# @logger.catch(reraise=True)
 def main() -> None:
     """Main function. Used to call fire wrapper."""
     fire.Fire(TJFeed)
